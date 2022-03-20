@@ -31,7 +31,13 @@ skin: "/assets/css/skins/dark.css"
 read_time: true
 words_per_minute: 200
 category_archive_path: "/categories/#"
+tag_archive_path: "/tags/#"
 copyright: "© Copyright 2022. This site is made with <3 by Elocater"
+
+footer_links:
+  - title: GitHub
+    url: https://github.com/elocaters-notes/elocaters-notes.github.io
+    icon: fab fa-github-square
 
 # Build settings
 # theme: minima

@@ -21,8 +21,7 @@
 title: Elocater's Notes
 email: elocaters.notes@gmail.com
 description: >-
-  Notes, character bios, and short stories for
-  Elocater's roleplay adventures.
+  A digital garden of Elocater's roleplay thoughts.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: "http://elocaters-notes.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 github_username:  elocaters-notes

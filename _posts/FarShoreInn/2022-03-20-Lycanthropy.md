@@ -3,7 +3,6 @@ layout: post
 title:  "General Description of Lycanthropy"
 date:   2022-03-20 00:17:23 -0700
 categories: far-shore-inn
-tags: world-building
 author: Elocater
 ---
 

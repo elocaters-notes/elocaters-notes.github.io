@@ -1,5 +1,6 @@
 # site navigation links
 
-
-# - title: Home
-#   url: /
+- title: seeds
+  url: /seeds/about
+- title: Far Shore Inn
+  url: /far-shore-inn/about

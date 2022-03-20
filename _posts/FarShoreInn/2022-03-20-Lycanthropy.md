@@ -3,8 +3,8 @@ layout: post
 title:  "General Description of Lycanthropy"
 date:   2022-03-20 00:17:23 -0700
 categories: far-shore-inn
+tags: world-building
 author: Elocater
-tags: rp world-building
 ---
 
 Shapechangers with at least two forms. The forms usually include humanoid, wolf, wolf-like beast, and everything in between. In humanoid form, they appear no different than a typical specimen of that humanoid race. They appear no different than a typical specimen of that wolf species in wolf form. In their wolf-like beast form, they have increased height and altered proportions while remaining wolf-like.

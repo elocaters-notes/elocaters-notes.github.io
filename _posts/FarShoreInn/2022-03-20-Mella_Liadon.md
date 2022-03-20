@@ -3,8 +3,9 @@ layout: post
 title:  "Mella Liadon"
 date:   2022-03-20 00:17:23 -0700
 categories: far-shore-inn
+tags: mella-liadon bio
 author: Elocater
-tags: Mella rp bio
+excerpt_separator: <!--more-->
 ---
 
 ## General Info
@@ -14,6 +15,9 @@ tags: Mella rp bio
 - **Race:** Elf
 - **Birthplace:** Off Island
 - **Stage of Life:** Adult
+- **Affliction:** [Werewolf](/far-shore-inn/Lycanthropy)
+
+<!--more-->
 
 ## Appearance
 

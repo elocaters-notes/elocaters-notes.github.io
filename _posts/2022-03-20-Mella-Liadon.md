@@ -34,7 +34,7 @@ tags: Mella rp bio
 - **Dislikes:** Raised voices, open expressions of anger, strong bad smells
 - **Moral/Ethical Beliefs:** Mella *tries* to be good but often finds herself in bad situations. She's generally empathetic and mostly adheres to "treat others the way you'd like to be treated."
 - **Hobbies:** Calligraphy, Reading, Carving (poorly), Math
-- **Quirks:** Mella seldom stops moving - not unless she's sleeping. Even then, it's not a guarantee because she sleepwalks sometimes. It's not nervous energy; it's more like she's so full of energy that she simply cannot stand to sit still.
+- **Quirks:** Mella seldom stops moving - not unless she's sleeping. Even then, it's not a guarantee because she sleepwalks sometimes. It's not nervous energy; it's more like she's so full of energy that she simply cannot bear to sit still.
 - **Fears:** vampires, being abandoned
 - **Manias:** Mella is almost magnetically attracted to sadism. *She* is not sadistic, but if someone around her *is* she'll almost inevitably end up in their orbit.
 

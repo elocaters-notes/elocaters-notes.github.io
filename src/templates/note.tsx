@@ -4,6 +4,7 @@ import { graphql, Link } from 'gatsby';
 import { MDXProvider } from '@mdx-js/react';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
 import Notice from '../components/notice';
+import { Helmet } from 'react-helmet';
 import * as noteStyles from './note.module.css';
 
 interface QueryData {
@@ -30,6 +31,10 @@ const NotePage = (context: any) => {
   let data: QueryData = context.data;
   return (
     <Layout>
+      <Helmet>
+        <meta charSet="utf-8" />
+        <title>{data.mdx.frontmatter.title}</title>
+      </Helmet>
       <article className={noteStyles.main}>
         <h1 className={noteStyles.title}>{data.mdx.frontmatter.title}</h1>
 

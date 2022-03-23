@@ -1,0 +1,13 @@
+.main_header {
+  margin: auto;
+  text-align: center;
+}
+
+.main_header_link {
+  text-decoration: none;
+}
+
+.main_note {
+  max-width: min(50rem, 1024px);
+  margin: auto;
+}

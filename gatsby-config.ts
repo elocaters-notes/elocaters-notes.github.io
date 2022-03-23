@@ -4,6 +4,7 @@ const config: GatsbyConfig = {
   siteMetadata: {
     title: `Elocater's Notes`,
     siteUrl: `https://elocaters-notes.github.io`,
+    description: `A Digital Garden of Elocater's RP thoughts.`,
   },
   plugins: [
     'gatsby-plugin-catch-links',

@@ -1,32 +1,17 @@
 import * as React from 'react';
-import { MDXRenderer } from 'gatsby-plugin-mdx';
+import * as styles from './notice.module.css';
 
-const Notice = ({ title, type, children }: any) => {
-  let color = 'blue';
-  switch (type) {
-    case 'info':
-      color = 'blue';
-      break;
-    case 'danger':
-      color = 'red';
-      break;
-    default:
-      color = 'blue';
-      break;
-  }
+interface NoticeArgs {
+  title: string;
+  children: JSX.Element | JSX.Element[];
+}
 
+const Notice = ({ title, children }: NoticeArgs) => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'baseline',
-        justifyContent: 'left',
-        backgroundColor: color,
-      }}
-    >
+    <section className={`${styles.notice} ${styles.warn}`}>
       <h4>{title}</h4>
       <p>{children}</p>
-    </div>
+    </section>
   );
 };
 

@@ -19,6 +19,7 @@ interface QueryData {
     };
     body: string;
     backlinks: [{ slug: string; frontmatter: { title: string } }];
+    links: [{ slug: string; frontmatter: { title: string } }];
   };
 }
 
@@ -43,6 +44,21 @@ const NotePage = (context: any) => {
             <MDXRenderer>{data.mdx.body}</MDXRenderer>
           </MDXProvider>
         </section>
+
+        {data.mdx.links.length > 0 && (
+          <section>
+            <h2>References</h2>
+            <ul>
+              {data.mdx.links.map(({ slug, frontmatter: { title } }) => {
+                return (
+                  <li>
+                    <Link to={'/' + slug}>{title}</Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
 
         {data.mdx.backlinks.length > 0 && (
           <section>
@@ -72,6 +88,12 @@ export const query = graphql`
       }
     }
     mdx(id: { eq: $id }) {
+      links {
+        slug
+        frontmatter {
+          title
+        }
+      }
       backlinks {
         slug
         frontmatter {

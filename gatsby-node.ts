@@ -1,5 +1,4 @@
 import type {
-  CreateNodeArgs,
   CreatePagesArgs,
   GatsbyNode,
   CreateResolversArgs,
@@ -7,10 +6,33 @@ import type {
 } from 'gatsby';
 import * as path from 'path';
 
-export const onCreateNode: GatsbyNode['onCreateNode'] = async ({
-  node,
-  actions,
-}: CreateNodeArgs) => {};
+const markdown_link_regex = /\[(.*?)\]\((.*?)\)/g;
+
+/** Convert a slug to a route by prepending a '/' */
+function slug_to_route(slug: string): string {
+  return '/' + slug;
+}
+
+/**
+ * A map of routes to their corresponding Node ids.
+ */
+let known_routes = new Map<string, string>();
+
+/**
+ * A global adjacency map of MDX node ids which link to other MDX node ids.
+ * e.g. there is a [link like this](/with/some/internal/page) in the body.
+ *
+ * This is automatically rebuilt on each call to `createPages`.
+ */
+let forward_link_map = new Map<string, Set<string>>();
+
+/**
+ * A global adjacency map of MDX node ids wihch link back to the given node.
+ * e.g. another page has a []() link which refers to this current one.
+ *
+ * This is automatically rebuilt on each call to `createPages`.
+ */
+let back_link_map = new Map<string, Set<string>>();
 
 export const createPages: GatsbyNode['createPages'] = async ({
   graphql,
@@ -39,88 +61,72 @@ export const createPages: GatsbyNode['createPages'] = async ({
     }
   `);
   let nodes: [MdxNode] = result.data.allMdx.nodes;
+  known_routes.clear();
+  forward_link_map.clear();
+  back_link_map.clear();
+  nodes.forEach((node: MdxNode) => {
+    forward_link_map.set(node.id, new Set());
+    back_link_map.set(node.id, new Set());
+    known_routes.set(slug_to_route(node.slug), node.id);
+  });
+  nodes.forEach((node: MdxNode) => {
+    let matches = [...node.rawBody.matchAll(markdown_link_regex)];
+    matches.forEach((match: RegExpMatchArray) => {
+      let link = match[2];
+      if (link.includes(':')) {
+        // not an internal link so move along
+        return;
+      }
+      if (known_routes.has(link)) {
+        let linked_id = known_routes.get(link);
+        forward_link_map.get(node.id).add(linked_id);
+        back_link_map.get(linked_id).add(node.id);
+      } else {
+        throw new Error(`Page at ${node.slug} has a broken link to ${link}`);
+      }
+    });
+  });
+
   let noteTemplate = path.resolve('src/templates/note.tsx');
   for (let node of nodes) {
+    console.log(`CREATING PAGE ${node.slug}`);
     actions.createPage({
-      path: node.slug,
+      path: slug_to_route(node.slug),
       component: noteTemplate,
       context: { id: node.id },
     });
   }
 };
 
-/**
- * Parse a link with either '\' or '/' separators and return a normalized
- * route which can be used to match links to pages.
- **/
-function link_to_route(link: string): string {
-  let parsed = path.parse(link);
-  let route = path.join(parsed.dir, parsed.name);
-  if (route.startsWith(path.sep)) {
-    return route;
-  } else {
-    return path.join(path.sep, route);
-  }
-}
-
-const build_backlink_map = async (context: any) => {
-  const markdown_link_regex = /\[(.*?)\]\((.*?)\)/g;
-
-  let all_mdx_nodes: { entries: [Node] } = await context.nodeModel.findAll({
-    type: `Mdx`,
-  });
-
-  let ids_to_backlinks = new Map<string, Set<Node>>();
-  let known_routes: Set<string> = new Set(); // the set of all known routes
-  let route_to_id: Map<string, string> = new Map(); // a map of routes to node ids
-  let id_to_route: Map<string, string> = new Map(); // a map of node ids to routes
-  for (let node of all_mdx_nodes.entries) {
-    let file_node = context.nodeModel.getNodeById({ id: node.parent });
-    if (file_node && file_node.relativePath) {
-      let route = link_to_route(file_node.relativePath);
-      known_routes.add(route);
-      id_to_route.set(node.id, route);
-      route_to_id.set(route, node.id);
-      ids_to_backlinks[node.id] = new Set();
-    }
-  }
-
-  for (let node of all_mdx_nodes.entries) {
-    let matches = [...node.internal.content.matchAll(markdown_link_regex)];
-
-    for (let match of matches) {
-      if (match[2].includes(':')) {
-        continue;
-      }
-      let matched_route = link_to_route(match[2]);
-      if (!known_routes.has(matched_route)) {
-        throw new Error(
-          `Page ${id_to_route.get(
-            node.id,
-          )} includes a broken link to ${matched_route}`,
-        );
-      }
-      let matched_id = route_to_id.get(matched_route);
-      ids_to_backlinks[matched_id].add(node);
-    }
-  }
-
-  return ids_to_backlinks;
-};
-
 export const createResolvers: GatsbyNode['createResolvers'] = ({
   createResolvers,
 }: CreateResolversArgs) => {
-  let ids_to_backlinks = undefined;
   createResolvers({
     Mdx: {
+      links: {
+        type: [`Mdx`],
+        resolve: async (source: Node, args: any, context: any, info: any) => {
+          context.nodeModel.findAll({ type: 'Mdx' });
+          let linked_node_ids = forward_link_map.get(source.id);
+          let linked_nodes = [];
+          linked_node_ids.forEach((id) => {
+            let node = context.nodeModel.getNodeById({ id });
+            linked_nodes.push(node);
+          });
+          return linked_nodes;
+        },
+      },
       backlinks: {
         type: [`Mdx`],
-        resolve: async (source, args, context, info) => {
-          if (!ids_to_backlinks) {
-            ids_to_backlinks = await build_backlink_map(context);
-          }
-          return ids_to_backlinks[source.id];
+        resolve: async (source: Node, args: any, context: any, info: any) => {
+          context.nodeModel.findAll({ type: 'Mdx' });
+          let linked_node_ids = back_link_map.get(source.id);
+          let linked_nodes = [];
+          linked_node_ids.forEach((id) => {
+            let node = context.nodeModel.getNodeById({ id });
+            linked_nodes.push(node);
+          });
+          return linked_nodes;
         },
       },
     },

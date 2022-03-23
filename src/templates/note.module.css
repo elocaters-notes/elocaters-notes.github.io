@@ -1,13 +1,46 @@
-.main_header {
-  margin: auto;
-  text-align: center;
-}
-
-.main_header_link {
-  text-decoration: none;
-}
-
-.main_note {
+.main {
   max-width: min(50rem, 1024px);
   margin: auto;
+}
+
+.title {
+  font-style: italic;
+  font-weight: bold;
+  padding-bottom: 0rem;
+  margin-bottom: 0.25rem;
+  font-size: 2.5rem;
+}
+
+.metadataHeader {
+  display: flex;
+  justify-content: left;
+}
+
+.metadataHeader p {
+  padding-top: 0rem;
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
+.metadataHeader p ~ p:before {
+  content: '•';
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.main hr {
+  color: var(--em-text);
+  background: var(--em-text);
+  max-width: 50%;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.main blockquote {
+  border-left: solid var(--em-text) 0.35rem;
+  margin-left: 1rem;
+  padding-left: 1rem;
 }

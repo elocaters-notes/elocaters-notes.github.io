@@ -14,12 +14,13 @@ interface QueryData {
     };
   };
   mdx: {
+    timeToRead: number;
     frontmatter: {
       title: string;
+      date: string;
     };
     body: string;
     backlinks: [{ slug: string; frontmatter: { title: string } }];
-    links: [{ slug: string; frontmatter: { title: string } }];
   };
 }
 
@@ -29,14 +30,12 @@ const NotePage = (context: any) => {
   let data: QueryData = context.data;
   return (
     <Layout>
-      <article className={noteStyles.main_note}>
-        <h1 id="title" style={{ fontStyle: 'italic' }}>
-          {data.mdx.frontmatter.title}
-        </h1>
+      <article className={noteStyles.main}>
+        <h1 className={noteStyles.title}>{data.mdx.frontmatter.title}</h1>
 
-        <section>
-          <p>Read time</p>
-          <p>Tags:</p>
+        <section className={noteStyles.metadataHeader}>
+          <p>{data.mdx.timeToRead} min read</p>
+          <p>{data.mdx.frontmatter.date}</p>
         </section>
 
         <section>
@@ -44,21 +43,6 @@ const NotePage = (context: any) => {
             <MDXRenderer>{data.mdx.body}</MDXRenderer>
           </MDXProvider>
         </section>
-
-        {data.mdx.links.length > 0 && (
-          <section>
-            <h2>References</h2>
-            <ul>
-              {data.mdx.links.map(({ slug, frontmatter: { title } }) => {
-                return (
-                  <li>
-                    <Link to={'/' + slug}>{title}</Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        )}
 
         {data.mdx.backlinks.length > 0 && (
           <section>
@@ -88,12 +72,6 @@ export const query = graphql`
       }
     }
     mdx(id: { eq: $id }) {
-      links {
-        slug
-        frontmatter {
-          title
-        }
-      }
       backlinks {
         slug
         frontmatter {
@@ -102,8 +80,10 @@ export const query = graphql`
       }
       frontmatter {
         title
+        date(formatString: "LL")
       }
       body
+      timeToRead
     }
   }
 `;

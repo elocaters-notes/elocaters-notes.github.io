@@ -4,16 +4,20 @@ const typography = new Typography({
   baseFontSize: '18px',
   googleFonts: [
     {
-      name: 'Arvo',
+      name: 'Noto Serif Display',
       styles: ['700i', '700'],
     },
     {
-      name: 'Roboto',
-      styles: ['400', '400i'],
+      name: 'Noto Sans Display',
+      styles: ['700i', '700'],
+    },
+    {
+      name: 'Noto Serif',
+      styles: ['400', '400i', '700', '700i'],
     },
   ],
-  headerFontFamily: ['Arvo', 'sans-serif'],
-  bodyFontFamily: ['Roboto', 'sans-serif'],
+  headerFontFamily: ['Noto Sans Display', 'sans-serif'],
+  bodyFontFamily: ['Noto Serif', 'serif'],
   headerColor: 'var(--em-text)',
   bodyColor: 'var(--body-text)',
   overrideStyles: (vertical_rhythm, options) => ({

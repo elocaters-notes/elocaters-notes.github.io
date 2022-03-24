@@ -8,7 +8,7 @@ interface NoticeArgs {
 
 const Notice = ({ title, children }: NoticeArgs) => {
   return (
-    <section className={`${styles.notice} ${styles.warn}`}>
+    <section className={`${styles.notice}`}>
       <h4>{title}</h4>
       <p>{children}</p>
     </section>

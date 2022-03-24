@@ -6,6 +6,7 @@ import { MDXRenderer } from 'gatsby-plugin-mdx';
 import Notice from '../components/notice';
 import { Helmet } from 'react-helmet';
 import * as noteStyles from './note.module.css';
+import Backlinks from '../components/backlinks';
 
 interface QueryData {
   site: {
@@ -21,7 +22,9 @@ interface QueryData {
       date: string;
     };
     body: string;
-    backlinks: [{ slug: string; frontmatter: { title: string } }];
+    backlinks: [
+      { slug: string; frontmatter: { title: string }; excerpt: string },
+    ];
   };
 }
 
@@ -49,20 +52,7 @@ const NotePage = (context: any) => {
           </MDXProvider>
         </section>
 
-        {data.mdx.backlinks.length > 0 && (
-          <section>
-            <h2>Referenced By</h2>
-            <ul>
-              {data.mdx.backlinks.map(({ slug, frontmatter: { title } }) => {
-                return (
-                  <li>
-                    <Link to={'/' + slug}>{title}</Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        )}
+        <Backlinks backlinks={data.mdx.backlinks}></Backlinks>
       </article>
     </Layout>
   );
@@ -82,6 +72,7 @@ export const query = graphql`
         frontmatter {
           title
         }
+        excerpt
       }
       frontmatter {
         title

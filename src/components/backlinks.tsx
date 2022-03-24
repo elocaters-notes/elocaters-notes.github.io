@@ -15,7 +15,7 @@ interface BacklinksArgs {
 }
 
 export default function Backlinks({ backlinks }: BacklinksArgs): JSX.Element {
-  if (backlinks.length == 0) {
+  if (!backlinks || backlinks.length == 0) {
     return <div id="nobacklinks"></div>;
   }
   return (

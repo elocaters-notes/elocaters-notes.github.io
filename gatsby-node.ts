@@ -6,33 +6,12 @@ import type {
 } from 'gatsby';
 import * as path from 'path';
 
-const markdown_link_regex = /\[(.*?)\]\((.*?)\)/g;
-
 /** Convert a slug to a route by prepending a '/' */
 function slug_to_route(slug: string): string {
   return '/' + slug;
 }
 
-/**
- * A map of routes to their corresponding Node ids.
- */
-let known_routes = new Map<string, string>();
-
-/**
- * A global adjacency map of MDX node ids which link to other MDX node ids.
- * e.g. there is a [link like this](/with/some/internal/page) in the body.
- *
- * This is automatically rebuilt on each call to `createPages`.
- */
-let forward_link_map = new Map<string, Set<string>>();
-
-/**
- * A global adjacency map of MDX node ids wihch link back to the given node.
- * e.g. another page has a []() link which refers to this current one.
- *
- * This is automatically rebuilt on each call to `createPages`.
- */
-let back_link_map = new Map<string, Set<string>>();
+let needs_rebuild: boolean = true;
 
 export const createPages: GatsbyNode['createPages'] = async ({
   graphql,
@@ -60,33 +39,8 @@ export const createPages: GatsbyNode['createPages'] = async ({
       }
     }
   `);
+  needs_rebuild = true;
   let nodes: [MdxNode] = result.data.allMdx.nodes;
-  known_routes.clear();
-  forward_link_map.clear();
-  back_link_map.clear();
-  nodes.forEach((node: MdxNode) => {
-    forward_link_map.set(node.id, new Set());
-    back_link_map.set(node.id, new Set());
-    known_routes.set(slug_to_route(node.slug), node.id);
-  });
-  nodes.forEach((node: MdxNode) => {
-    let matches = [...node.rawBody.matchAll(markdown_link_regex)];
-    matches.forEach((match: RegExpMatchArray) => {
-      let link = match[2];
-      if (link.includes(':')) {
-        // not an internal link so move along
-        return;
-      }
-      if (known_routes.has(link)) {
-        let linked_id = known_routes.get(link);
-        forward_link_map.get(node.id).add(linked_id);
-        back_link_map.get(linked_id).add(node.id);
-      } else {
-        throw new Error(`Page at ${node.slug} has a broken link to ${link}`);
-      }
-    });
-  });
-
   let noteTemplate = path.resolve('src/templates/note.tsx');
   for (let node of nodes) {
     console.log(`CREATING PAGE ${node.slug}`);
@@ -98,6 +52,103 @@ export const createPages: GatsbyNode['createPages'] = async ({
   }
 };
 
+/**
+ * Resolve the slug value for a given node.
+ **/
+const resolve_slug = async (
+  node: Node,
+  args: any,
+  context: any,
+  info: any,
+): Promise<string> => {
+  const type = info.schema.getType('Mdx');
+  const resolver = type.getFields()['slug'].resolve;
+  return await resolver(node, args, context, info);
+};
+
+const markdown_link_regex = /\[(.*?)\]\((.*?)\)/g;
+
+interface Adjacency {
+  /**
+   * A map of route to node id. e.g. something like
+   *   /some/path -> node-23423425
+   **/
+  known_routes: Map<string, string>;
+
+  /**
+   * A map of node id to the set of all node id's it references via links
+   * within the note's body.
+   **/
+  forward_link_map: Map<string, Set<string>>;
+
+  /**
+   * A map of node id to the set of all node id's which refer to it within
+   * THEIR bodies.
+   **/
+  back_link_map: Map<string, Set<string>>;
+}
+
+const rebuild_maps = async (
+  args: any,
+  context: any,
+  info: any,
+): Promise<Adjacency> => {
+  let known_routes = new Map<string, string>();
+  let forward_link_map = new Map<string, Set<string>>();
+  let back_link_map = new Map<string, Set<string>>();
+
+  let result: { entries: [Node] } = await context.nodeModel.findAll({
+    type: `Mdx`,
+  });
+  let nodes = [...result.entries];
+
+  for (let node of nodes) {
+    forward_link_map.set(node.id, new Set());
+    back_link_map.set(node.id, new Set());
+    let slug = await resolve_slug(node, args, context, info);
+    known_routes.set(slug_to_route(slug), node.id);
+  }
+
+  for (let node of nodes) {
+    let matches = [...node.internal.content.matchAll(markdown_link_regex)];
+    let slug = await resolve_slug(node, args, context, info);
+    console.log(`CHECKING FOR ${slug}`);
+    for (let match of matches) {
+      let link = match[2];
+      if (link.includes(':')) {
+        // not an internal link so move along
+        continue;
+      }
+      if (known_routes.has(link)) {
+        let linked_id = known_routes.get(link);
+        forward_link_map.get(node.id).add(linked_id);
+        back_link_map.get(linked_id).add(node.id);
+      } else {
+        throw new Error(`Page at ${slug} has a broken link to ${link}`);
+      }
+    }
+  }
+
+  return {
+    known_routes,
+    forward_link_map,
+    back_link_map,
+  };
+};
+
+let adjacency_promise: Promise<Adjacency> = undefined;
+const update_maps_if_needed = async (
+  args: any,
+  context: any,
+  info: any,
+): Promise<Adjacency> => {
+  if (needs_rebuild) {
+    adjacency_promise = rebuild_maps(args, context, info);
+    needs_rebuild = false;
+  }
+  return adjacency_promise;
+};
+
 export const createResolvers: GatsbyNode['createResolvers'] = ({
   createResolvers,
 }: CreateResolversArgs) => {
@@ -106,8 +157,9 @@ export const createResolvers: GatsbyNode['createResolvers'] = ({
       links: {
         type: [`Mdx`],
         resolve: async (source: Node, args: any, context: any, info: any) => {
+          const adjacency = await update_maps_if_needed(args, context, info);
           context.nodeModel.findAll({ type: 'Mdx' });
-          let linked_node_ids = forward_link_map.get(source.id);
+          const linked_node_ids = adjacency.forward_link_map.get(source.id);
           let linked_nodes = [];
           linked_node_ids.forEach((id) => {
             let node = context.nodeModel.getNodeById({ id });
@@ -119,8 +171,9 @@ export const createResolvers: GatsbyNode['createResolvers'] = ({
       backlinks: {
         type: [`Mdx`],
         resolve: async (source: Node, args: any, context: any, info: any) => {
+          const adjacency = await update_maps_if_needed(args, context, info);
           context.nodeModel.findAll({ type: 'Mdx' });
-          let linked_node_ids = back_link_map.get(source.id);
+          const linked_node_ids = adjacency.back_link_map.get(source.id);
           let linked_nodes = [];
           linked_node_ids.forEach((id) => {
             let node = context.nodeModel.getNodeById({ id });

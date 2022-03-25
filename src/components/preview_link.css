@@ -1,0 +1,17 @@
+.tippy-box[data-theme~='notes_theme'] {
+  background-color: var(--background-highlight);
+  color: var(--em-text);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.25rem 0.5rem 0 rgba(0, 0, 0, 0.2);
+  transition: 0.3s;
+  max-height: 20rem;
+  overflow-y: scroll;
+}
+
+.tippy-box[data-theme~='notes_theme']:hover {
+  box-shadow: 0 0.5rem 1rem 0 rgba(0, 0, 0, 0.2);
+}
+
+.tippy-box[data-theme~='notes_theme'] .tippy-content {
+  padding: 1rem;
+}

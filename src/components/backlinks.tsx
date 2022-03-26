@@ -14,6 +14,16 @@ interface BacklinksArgs {
   backlinks: Backlink[];
 }
 
+function sortBySlug(lhs: Backlink, rhs: Backlink) {
+  if (lhs.slug < rhs.slug) {
+    return -1;
+  } else if (lhs.slug > rhs.slug) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
 export default function Backlinks({ backlinks }: BacklinksArgs): JSX.Element {
   if (!backlinks || backlinks.length == 0) {
     return <div id="nobacklinks"></div>;
@@ -22,7 +32,7 @@ export default function Backlinks({ backlinks }: BacklinksArgs): JSX.Element {
     <section>
       <h2>Referenced By</h2>
       <div className={styles.backlinksContainer}>
-        {backlinks.map((backlink: Backlink) => {
+        {backlinks.sort(sortBySlug).map((backlink: Backlink) => {
           return (
             <Link className={styles.backlink} to={'/' + backlink.slug}>
               <h4>{backlink.frontmatter.title}</h4>

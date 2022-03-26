@@ -27,9 +27,10 @@ export default function PreviewLink({
   href,
   children,
 }: PreviewLinkArgs): JSX.Element {
-  let link_data = links_on_page.find(
-    (link_data) => href == `/` + link_data.slug,
-  );
+  let link_data = undefined;
+  if (links_on_page) {
+    link_data = links_on_page.find((link_data) => href == `/` + link_data.slug);
+  }
 
   if (link_data) {
     return (

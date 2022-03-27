@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Layout from './layout';
-import { graphql, Link } from 'gatsby';
+import { graphql } from 'gatsby';
 import { MDXProvider } from '@mdx-js/react';
 import { MDXRenderer } from 'gatsby-plugin-mdx';
 import Notice from '../components/notice';
@@ -13,6 +13,40 @@ import Tippy from '@tippyjs/react';
 
 import * as noteStyles from './note.module.css';
 import 'tippy.js/dist/tippy.css';
+
+export const query = graphql`
+  query MdxNotePost($id: String) {
+    site {
+      siteMetadata {
+        title
+        description
+      }
+    }
+    mdx(id: { eq: $id }) {
+      links {
+        slug
+        frontmatter {
+          title
+        }
+        body
+      }
+      backlinks {
+        slug
+        frontmatter {
+          title
+        }
+        excerpt
+      }
+      frontmatter {
+        title
+        date(formatString: "LL")
+      }
+      body
+      excerpt
+      timeToRead
+    }
+  }
+`;
 
 interface QueryData {
   site: {
@@ -44,9 +78,8 @@ interface QueryData {
   };
 }
 
-const NotePage = (context: any) => {
+export default function NotePage(context: any) {
   let data: QueryData = context.data;
-
   const mdx_components = {
     Quote,
     Notice,
@@ -87,40 +120,4 @@ const NotePage = (context: any) => {
       </article>
     </Layout>
   );
-};
-
-export const query = graphql`
-  query MdxNotePost($id: String) {
-    site {
-      siteMetadata {
-        title
-        description
-      }
-    }
-    mdx(id: { eq: $id }) {
-      links {
-        slug
-        frontmatter {
-          title
-        }
-        body
-      }
-      backlinks {
-        slug
-        frontmatter {
-          title
-        }
-        excerpt
-      }
-      frontmatter {
-        title
-        date(formatString: "LL")
-      }
-      body
-      excerpt
-      timeToRead
-    }
-  }
-`;
-
-export default NotePage;
+}

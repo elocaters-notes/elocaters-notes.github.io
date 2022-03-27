@@ -40,6 +40,14 @@ const config: GatsbyConfig = {
         extensions: [`.mdx`, `.md`],
       },
     },
+    {
+      resolve: 'gatsby-plugin-manifest',
+      options: {
+        icon: 'src/images/gatsby-icon.png',
+        short_name: "Elo's Notes",
+        name: "Elocater's Notes",
+      },
+    },
   ],
 };
 

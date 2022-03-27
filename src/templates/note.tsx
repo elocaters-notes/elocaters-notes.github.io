@@ -9,7 +9,7 @@ import Backlinks from '../components/backlinks';
 import PreviewLink from '../components/preview_link';
 import NoteTitle from '../components/note_title';
 import Quote from '../components/quote';
-import Tippy from '@tippyjs/react';
+import Video from '../components/video';
 
 import * as noteStyles from './note.module.css';
 import 'tippy.js/dist/tippy.css';
@@ -83,6 +83,7 @@ export default function NotePage(context: any) {
   const mdx_components = {
     Quote,
     Notice,
+    Video,
     a: ({ href, children }: { href: string; children: JSX.Element[] }) => {
       return (
         <PreviewLink links_on_page={data.mdx.links} href={href}>

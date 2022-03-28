@@ -1,0 +1,22 @@
+.backlinksContainer {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: stretch;
+}
+
+.backlink {
+  flex: 1 0 calc(50% - 4rem);
+  min-width: 15rem;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin: 1rem;
+  background: var(--background-highlight);
+  text-decoration: none;
+  color: var(--body-text);
+}
+
+.backlink:hover {
+  text-decoration: none;
+  filter: brightness(150%);
+  color: var(--em-text);
+}

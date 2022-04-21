@@ -37,6 +37,9 @@ export interface GraphLink extends SimulationLinkDatum<GraphNode> {
 
   /** The node (or id string for the node) where this link ends. */
   target: string | GraphNode;
+
+  /** The length of the link. Defaults to 100. */
+  length?: number;
 }
 
 /**
@@ -54,6 +57,11 @@ export interface NetworkGraphProps {
    * while positive pulls them together.
    */
   forceStrength: number;
+
+  /**
+   * How close any two nodes should be allowed.
+   */
+  collisionDistance?: number;
 }
 
 /**
@@ -62,6 +70,10 @@ export interface NetworkGraphProps {
 interface State {
   nodes: GraphNode[];
   links: GraphLink[];
+  width: number;
+  height: number;
+  xmin: number;
+  ymin: number;
 }
 
 /**
@@ -131,14 +143,19 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
   static HEIGHT = 250;
 
   sim: Simulation<GraphNode, GraphLink> | undefined;
+  state: State = {
+    nodes: [],
+    links: [],
+    width: NetworkGraph.WIDTH,
+    height: NetworkGraph.HEIGHT,
+    xmin: 0,
+    ymin: 0,
+  };
 
   constructor(props: NetworkGraphProps) {
     super(props);
-
-    this.state = {
-      nodes: props.nodes,
-      links: props.links,
-    };
+    this.state.nodes = props.nodes;
+    this.state.links = props.links;
   }
 
   componentDidMount() {
@@ -148,18 +165,44 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
         'links',
         forceLink<GraphNode, GraphLink>(this.state.links)
           .id((node: GraphNode) => node.id)
-          .distance((link) => 100),
+          .distance((link) => link.length || 100),
       )
-      .force(
-        'center',
-        forceCenter(NetworkGraph.WIDTH / 2, NetworkGraph.HEIGHT / 2),
-      )
-      .force('collide', forceCollide(20));
+      .force('center', forceCenter(0, 0))
+      .force('collide', forceCollide(this.props.collisionDistance || 20));
 
     this.sim.on('tick', () => {
+      let xmin = 0,
+        ymin = 0,
+        xmax = 0,
+        ymax = 0;
+
+      for (let node of this.state.nodes) {
+        let x = node.x || 0;
+        let y = node.y || 0;
+        if (xmin > x) {
+          xmin = x;
+        }
+        if (xmax < x) {
+          xmax = x;
+        }
+        if (ymin > y) {
+          ymin = y;
+        }
+        if (ymax < y) {
+          ymax = y;
+        }
+      }
+
+      const width = Math.max(Math.abs(xmax - xmin), 200);
+      const height = Math.max(Math.abs(ymax - ymin), 200);
+
       this.setState({
         nodes: this.state.nodes,
         links: this.state.links,
+        width: width * 1.5,
+        height: height * 1.5,
+        xmin: Math.floor(xmin) - width * 0.25,
+        ymin: Math.floor(ymin) - height * 0.25,
       });
     });
   }
@@ -171,6 +214,8 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
   }
 
   render() {
+    const viewBox = `${this.state.xmin} ${this.state.ymin} ${this.state.width} ${this.state.height}`;
+
     return (
       <div
         className="svg-container"
@@ -178,15 +223,14 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
           display: 'inline-block',
           position: 'relative',
           width: '100%',
-          paddingBottom:
-            100.0 * (NetworkGraph.HEIGHT / NetworkGraph.WIDTH) + '%',
+          paddingBottom: 100.0 * (this.state.height / this.state.width) + '%',
           verticalAlign: 'middle',
           overflow: 'hidden',
         }}
       >
         <svg
           version="1.1"
-          viewBox={'0 0 ' + NetworkGraph.WIDTH + ' ' + NetworkGraph.HEIGHT}
+          viewBox={viewBox}
           preserveAspectRatio="xMinYMin meet"
           style={{
             display: 'inline-block',

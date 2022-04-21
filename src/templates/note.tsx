@@ -122,6 +122,7 @@ export default function NotePage(context: any) {
     links.push({
       source: self_id,
       target: node.id,
+      length: 100,
     });
   });
   data.mdx.backlinks.map(mdx_to_node).forEach((node: GraphNode) => {
@@ -129,6 +130,7 @@ export default function NotePage(context: any) {
     links.push({
       source: node.id,
       target: self_id,
+      length: 200,
     });
   });
   let my_node = mdx_to_node(data.mdx);

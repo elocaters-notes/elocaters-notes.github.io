@@ -10,6 +10,11 @@ import PreviewLink from '../components/preview_link';
 import NoteTitle from '../components/note_title';
 import Quote from '../components/quote';
 import Video from '../components/video';
+import {
+  NetworkGraph,
+  GraphNode,
+  GraphLink,
+} from '../components/network_graph';
 
 import * as noteStyles from './note.module.css';
 import 'tippy.js/dist/tippy.css';
@@ -41,6 +46,7 @@ export const query = graphql`
         title
         date(formatString: "LL")
       }
+      slug
       body
       excerpt
       timeToRead
@@ -61,6 +67,7 @@ interface QueryData {
       title: string;
       date: string;
     };
+    slug: string;
     body: string;
     excerpt: string;
     backlinks: [
@@ -78,8 +85,22 @@ interface QueryData {
   };
 }
 
+function slug_to_path(slug: string): string {
+  return '/' + slug;
+}
+
+function mdx_to_node(node: {
+  slug: string;
+  frontmatter: { title: string };
+}): GraphNode {
+  return {
+    id: slug_to_path(node.slug),
+    title: node.frontmatter.title,
+  };
+}
+
 export default function NotePage(context: any) {
-  let data: QueryData = context.data;
+  const data: QueryData = context.data;
   const mdx_components = {
     Quote,
     Notice,
@@ -92,6 +113,30 @@ export default function NotePage(context: any) {
       );
     },
   };
+
+  const self_id = slug_to_path(data.mdx.slug);
+  const links: GraphLink[] = [];
+  const node_map = new Map<string, GraphNode>();
+  data.mdx.links.map(mdx_to_node).forEach((node: GraphNode) => {
+    node_map.set(node.id, node);
+    links.push({
+      source: self_id,
+      target: node.id,
+    });
+  });
+  data.mdx.backlinks.map(mdx_to_node).forEach((node: GraphNode) => {
+    node_map.set(node.id, node);
+    links.push({
+      source: node.id,
+      target: self_id,
+    });
+  });
+  let my_node = mdx_to_node(data.mdx);
+  my_node.color = '#cb4b16';
+  my_node.radius = 10;
+  node_map.set(data.mdx.slug, my_node);
+  const nodes = [...node_map.values()];
+
   return (
     <Layout>
       <Helmet>
@@ -118,6 +163,13 @@ export default function NotePage(context: any) {
         </section>
 
         <Backlinks backlinks={data.mdx.backlinks}></Backlinks>
+
+        <h2>Links Visualized</h2>
+        <NetworkGraph
+          links={links}
+          nodes={nodes}
+          forceStrength={-40}
+        ></NetworkGraph>
       </article>
     </Layout>
   );

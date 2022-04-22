@@ -28,28 +28,40 @@ export const query = graphql`
       }
     }
     mdx(id: { eq: $id }) {
+      ...MdxGraphNode
+
       links {
-        slug
-        frontmatter {
-          title
-        }
+        ...MdxGraphNode
         body
+        links {
+          ...MdxGraphNode
+        }
+        backlinks {
+          ...MdxGraphNode
+        }
       }
       backlinks {
-        slug
-        frontmatter {
-          title
-        }
+        ...MdxGraphNode
         excerpt
+        links {
+          ...MdxGraphNode
+        }
+        backlinks {
+          ...MdxGraphNode
+        }
       }
       frontmatter {
-        title
         date(formatString: "LL")
       }
-      slug
       body
       excerpt
       timeToRead
+    }
+  }
+  fragment MdxGraphNode on Mdx {
+    slug
+    frontmatter {
+      title
     }
   }
 `;
@@ -62,37 +74,63 @@ interface QueryData {
     };
   };
   mdx: {
-    timeToRead: number;
+    links: {
+      slug: string;
+      frontmatter: { title: string };
+      body: string;
+      links: {
+        slug: string;
+        frontmatter: { title: string };
+      }[];
+      backlinks: {
+        slug: string;
+        frontmatter: { title: string };
+      }[];
+    }[];
+    backlinks: {
+      slug: string;
+      frontmatter: { title: string };
+      excerpt: string;
+      links: {
+        slug: string;
+        frontmatter: { title: string };
+      }[];
+      backlinks: {
+        slug: string;
+        frontmatter: { title: string };
+      }[];
+    }[];
     frontmatter: {
-      title: string;
       date: string;
+      title: string;
     };
     slug: string;
     body: string;
     excerpt: string;
-    backlinks: [
-      { slug: string; frontmatter: { title: string }; excerpt: string },
-    ];
-    links: [
-      {
-        slug: string;
-        frontmatter: {
-          title: string;
-        };
-        body: string;
-      },
-    ];
+    timeToRead: number;
   };
+}
+
+/** The minimum set of info needed to render an MDX graph node. */
+interface MdxGraphNode {
+  slug: string;
+  frontmatter: { title: string };
+}
+
+/**
+ * The set of info describing an MDX graph node that's only 'one hop' from the
+ * current page.
+ */
+interface OneHopMdxGraphNode extends MdxGraphNode {
+  links: MdxGraphNode[];
+  backlinks: MdxGraphNode[];
 }
 
 function slug_to_path(slug: string): string {
   return '/' + slug;
 }
 
-function mdx_to_node(node: {
-  slug: string;
-  frontmatter: { title: string };
-}): GraphNode {
+function mdx_to_node(node: MdxGraphNode): GraphNode {
   return {
     id: slug_to_path(node.slug),
     title: node.frontmatter.title,
@@ -117,26 +155,82 @@ export default function NotePage(context: any) {
   const self_id = slug_to_path(data.mdx.slug);
   const links: GraphLink[] = [];
   const node_map = new Map<string, GraphNode>();
-  data.mdx.links.map(mdx_to_node).forEach((node: GraphNode) => {
-    node_map.set(node.id, node);
+  data.mdx.links.forEach((node_one_hop_mdx) => {
+    let node_one_hop = mdx_to_node(node_one_hop_mdx);
+    node_map.set(node_one_hop.id, node_one_hop);
     links.push({
       source: self_id,
-      target: node.id,
+      target: node_one_hop.id,
+      lineWidth: 2.0,
       length: 100,
     });
+    node_one_hop_mdx.links.forEach(
+      (node_two_hop_mdx: { slug: string; frontmatter: { title: string } }) => {
+        let node_two_hop = mdx_to_node(node_two_hop_mdx);
+        node_map.set(node_two_hop.id, node_two_hop);
+        links.push({
+          source: node_one_hop.id,
+          target: node_two_hop.id,
+          length: 100,
+          strengthMultiplier: 0.2,
+          opacity: 0.25,
+        });
+      },
+    );
+    node_one_hop_mdx.backlinks.forEach(
+      (node_two_hop_mdx: { slug: string; frontmatter: { title: string } }) => {
+        let node_two_hop = mdx_to_node(node_two_hop_mdx);
+        node_map.set(node_two_hop.id, node_two_hop);
+        links.push({
+          source: node_two_hop.id,
+          target: node_one_hop.id,
+          strengthMultiplier: 0.2,
+          opacity: 0.25,
+          length: 100,
+        });
+      },
+    );
   });
-  data.mdx.backlinks.map(mdx_to_node).forEach((node: GraphNode) => {
-    node_map.set(node.id, node);
+  data.mdx.backlinks.forEach((node_one_hop_mdx) => {
+    let node_one_hop = mdx_to_node(node_one_hop_mdx);
+    node_map.set(node_one_hop.id, node_one_hop);
     links.push({
-      source: node.id,
+      source: node_one_hop.id,
       target: self_id,
-      length: 200,
+      length: 100,
+      lineWidth: 2.0,
     });
+    node_one_hop_mdx.links.forEach(
+      (node_two_hop_mdx: { slug: string; frontmatter: { title: string } }) => {
+        let node_two_hop = mdx_to_node(node_two_hop_mdx);
+        node_map.set(node_two_hop.id, node_two_hop);
+        links.push({
+          source: node_one_hop.id,
+          target: node_two_hop.id,
+          length: 100,
+          strengthMultiplier: 0.2,
+          opacity: 0.25,
+        });
+      },
+    );
+    node_one_hop_mdx.backlinks.forEach(
+      (node_two_hop_mdx: { slug: string; frontmatter: { title: string } }) => {
+        let node_two_hop = mdx_to_node(node_two_hop_mdx);
+        node_map.set(node_two_hop.id, node_two_hop);
+        links.push({
+          source: node_two_hop.id,
+          target: node_one_hop.id,
+          strengthMultiplier: 0.2,
+          opacity: 0.25,
+          length: 100,
+        });
+      },
+    );
   });
   let my_node = mdx_to_node(data.mdx);
   my_node.color = '#cb4b16';
   my_node.radius = 10;
-  node_map.set(data.mdx.slug, my_node);
+  node_map.set(my_node.id, my_node);
   const nodes = [...node_map.values()];
 
   return (
@@ -170,7 +264,8 @@ export default function NotePage(context: any) {
         <NetworkGraph
           links={links}
           nodes={nodes}
-          forceStrength={-40}
+          forceStrength={-500}
+          collisionDistance={30}
         ></NetworkGraph>
       </article>
     </Layout>

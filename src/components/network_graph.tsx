@@ -82,6 +82,10 @@ interface State {
 function render_graph_link(link: GraphLink, index: number) {
   const source: GraphNode = link.source as GraphNode;
   const target: GraphNode = link.target as GraphNode;
+  const dx = source.x! - target.x!;
+  const dy = source.y! - target.y!;
+  const len = Math.sqrt(dx * dx + dy * dy);
+  const stroke = Math.sqrt(len / 50);
   return (
     <g>
       <line
@@ -91,6 +95,7 @@ function render_graph_link(link: GraphLink, index: number) {
         y2={target.y}
         key={`line-${index}`}
         stroke="#586e75"
+        strokeWidth={stroke}
         marker-end="url(#arrowhead)"
       />
     </g>
@@ -98,7 +103,7 @@ function render_graph_link(link: GraphLink, index: number) {
 }
 
 function truncate_string(str: string, len: number) {
-  if (str.length < len) {
+  if (str.length <= len) {
     return str;
   }
   return str.slice(0, len) + '...';
@@ -109,6 +114,33 @@ function truncate_string(str: string, len: number) {
  */
 function render_graph_node(node: GraphNode, index: number) {
   const radius = node.radius || 6;
+  const fontSize = radius * 1.75 + 'px';
+  const text = (display: string, className: string): JSX.Element[] => {
+    return [
+      <text
+        x={node.x}
+        y={node.y}
+        fill="none"
+        fontSize={fontSize}
+        textAnchor="middle"
+        strokeWidth={3}
+        stroke="#073642"
+        className={className}
+      >
+        {display}
+      </text>,
+      <text
+        x={node.x}
+        y={node.y}
+        fill="#93a1a1"
+        fontSize={fontSize}
+        textAnchor="middle"
+        className={className}
+      >
+        {display}
+      </text>,
+    ];
+  };
   return (
     <g>
       <title>{node.title}</title>
@@ -120,15 +152,8 @@ function render_graph_node(node: GraphNode, index: number) {
           fill={node.color || '#268bd2'}
           key={index}
         />
-        <text
-          x={node.x}
-          y={node.y}
-          fill="#93a1a1"
-          fontSize={radius * 1.75 + 'px'}
-          textAnchor="middle"
-        >
-          {truncate_string(node.title, 10)}
-        </text>
+        {text(node.title, 'longTitle')}
+        {text(truncate_string(node.title, 8), 'shortTitle')}
       </Link>
     </g>
   );
@@ -159,18 +184,7 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
   }
 
   componentDidMount() {
-    this.sim = forceSimulation(this.state.nodes)
-      .force('charge', forceManyBody().strength(this.props.forceStrength))
-      .force(
-        'links',
-        forceLink<GraphNode, GraphLink>(this.state.links)
-          .id((node: GraphNode) => node.id)
-          .distance((link) => link.length || 100),
-      )
-      .force('center', forceCenter(0, 0))
-      .force('collide', forceCollide(this.props.collisionDistance || 20));
-
-    this.sim.on('tick', () => {
+    const tick = () => {
       let xmin = 0,
         ymin = 0,
         xmax = 0,
@@ -204,7 +218,23 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
         xmin: Math.floor(xmin) - width * 0.25,
         ymin: Math.floor(ymin) - height * 0.25,
       });
+    };
+
+    this.state.nodes.sort((lhs: GraphNode, rhs: GraphNode): number => {
+      return lhs.id.localeCompare(rhs.id);
     });
+
+    this.sim = forceSimulation(this.state.nodes)
+      .on('tick', tick)
+      .force('charge', forceManyBody().strength(this.props.forceStrength))
+      .force(
+        'links',
+        forceLink<GraphNode, GraphLink>(this.state.links)
+          .id((node: GraphNode) => node.id)
+          .distance((link) => link.length || 100),
+      )
+      .force('center', forceCenter(0, 0))
+      .force('collide', forceCollide(this.props.collisionDistance || 20));
   }
 
   componentWillUnmount() {
@@ -239,6 +269,12 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
             left: 0,
           }}
         >
+          <style>
+            {`svg g:not(:hover) .longTitle { opacity: 0;}`}
+            {`svg g:hover .longTitle { opacity: 100; }`}
+            {`svg g:not(:hover) .shortTitle { opacity: 100;}`}
+            {`svg g:hover .shortTitle { opacity: 0;}`}
+          </style>
           <defs>
             <marker
               id="arrowhead"
@@ -247,6 +283,7 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
               refX="13"
               refY="3.5"
               orient="auto"
+              markerUnits="userSpaceOnUse"
             >
               <polygon points="0 0, 10 3.5, 0 7" fill="#586e75"></polygon>
             </marker>

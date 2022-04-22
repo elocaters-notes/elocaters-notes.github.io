@@ -40,6 +40,22 @@ export interface GraphLink extends SimulationLinkDatum<GraphNode> {
 
   /** The length of the link. Defaults to 100. */
   length?: number;
+
+  /**
+   * The multiplier used to scale the force applied by this link.
+   * If not set, the simulation defaults to 1.
+   */
+  strengthMultiplier?: number;
+
+  /**
+   * How visible this link is. Values in the range [0.0, 1.0], defaults to 1.0.
+   */
+  opacity?: number;
+
+  /**
+   * How think the link should be. Defaults to 1.
+   */
+  lineWidth?: number;
 }
 
 /**
@@ -82,10 +98,6 @@ interface State {
 function render_graph_link(link: GraphLink, index: number) {
   const source: GraphNode = link.source as GraphNode;
   const target: GraphNode = link.target as GraphNode;
-  const dx = source.x! - target.x!;
-  const dy = source.y! - target.y!;
-  const len = Math.sqrt(dx * dx + dy * dy);
-  const stroke = Math.sqrt(len / 50);
   return (
     <g>
       <line
@@ -95,8 +107,9 @@ function render_graph_link(link: GraphLink, index: number) {
         y2={target.y}
         key={`line-${index}`}
         stroke="#586e75"
-        strokeWidth={stroke}
+        strokeWidth={link.lineWidth || 1.0}
         marker-end="url(#arrowhead)"
+        opacity={link.opacity || 1.0}
       />
     </g>
   );
@@ -224,15 +237,20 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
       return lhs.id.localeCompare(rhs.id);
     });
 
+    const links = forceLink<GraphNode, GraphLink>(this.state.links)
+      .id((node: GraphNode) => node.id)
+      .distance((link: GraphLink) => link.length || 100)
+      .iterations(2);
+    const defaultStrength = links.strength();
+    links.strength((link: GraphLink, i: number, links: GraphLink[]) => {
+      const multiplier = link.strengthMultiplier || 1.0;
+      return defaultStrength(link, i, links) * multiplier;
+    });
+
     this.sim = forceSimulation(this.state.nodes)
       .on('tick', tick)
       .force('charge', forceManyBody().strength(this.props.forceStrength))
-      .force(
-        'links',
-        forceLink<GraphNode, GraphLink>(this.state.links)
-          .id((node: GraphNode) => node.id)
-          .distance((link) => link.length || 100),
-      )
+      .force('links', links)
       .force('center', forceCenter(0, 0))
       .force('collide', forceCollide(this.props.collisionDistance || 20));
   }
@@ -274,6 +292,7 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
             {`svg g:hover .longTitle { opacity: 100; }`}
             {`svg g:not(:hover) .shortTitle { opacity: 100;}`}
             {`svg g:hover .shortTitle { opacity: 0;}`}
+            {`svg g:hover line { opacity: 1.0; stroke-width: 3.0; }`}
           </style>
           <defs>
             <marker

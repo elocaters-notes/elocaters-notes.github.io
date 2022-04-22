@@ -79,7 +79,10 @@ function KnowledgeGraph(props: KnowledgeGraphProps): JSX.Element {
       links.push({
         source: root_id,
         target: target_id,
-        length: len > 1 ? 50 : 200,
+        length: len > 1 ? 50 : 100,
+        strengthMultiplier: len > 1 ? 1.5 : 0.1,
+        opacity: len > 1 ? 1.0 : 0.25,
+        lineWidth: len > 1 ? 1.1 : 0.9,
       });
     });
   });

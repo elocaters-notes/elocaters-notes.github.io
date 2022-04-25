@@ -161,7 +161,7 @@ export default function NotePage(context: any) {
     links.push({
       source: self_id,
       target: node_one_hop.id,
-      lineWidth: 2.0,
+      lineWidth: 2.5,
       length: 100,
     });
     node_one_hop_mdx.links.forEach(
@@ -198,7 +198,7 @@ export default function NotePage(context: any) {
       source: node_one_hop.id,
       target: self_id,
       length: 100,
-      lineWidth: 2.0,
+      lineWidth: 2.5,
     });
     node_one_hop_mdx.links.forEach(
       (node_two_hop_mdx: { slug: string; frontmatter: { title: string } }) => {

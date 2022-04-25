@@ -70,16 +70,14 @@ class ZoomableSvg extends React.Component<ZoomableSvgProps, State> {
     return (
       <div
         style={{
-          display: 'inline-block',
+          display: 'block',
           position: 'relative',
           width: '100%',
           maxWidth: '100%',
-          paddingBottom: 100.0 * this.aspect() + '%',
+          paddingBottom: 100.0 + '%',
           verticalAlign: 'middle',
           overflow: 'hidden',
-          border: '0.1rem solid var(--background-highlight)',
-          margin: '2rem',
-          borderRadius: '1rem',
+          marginBottom: '2rem',
         }}
       >
         <svg
@@ -89,8 +87,14 @@ class ZoomableSvg extends React.Component<ZoomableSvgProps, State> {
           style={{
             display: 'inline-block',
             position: 'absolute',
+            width: '100%',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            height: '100%',
             top: 0,
             left: 0,
+            border: '0.1rem solid var(--background-highlight)',
+            borderRadius: '1rem',
           }}
           ref={this.svgRef}
         >

@@ -101,12 +101,20 @@ function KnowledgeGraph(props: KnowledgeGraphProps): JSX.Element {
         />
       </Helmet>
 
-      <NetworkGraph
-        nodes={nodes}
-        links={links}
-        forceStrength={-100}
-        collisionDistance={15}
-      ></NetworkGraph>
+      <div
+        style={{
+          maxWidth: 'min(90vw, min(50rem, 1024px))',
+          width: 'min(90vw, min(50rem, 1024px))',
+          margin: 'auto',
+        }}
+      >
+        <NetworkGraph
+          nodes={nodes}
+          links={links}
+          forceStrength={-100}
+          collisionDistance={15}
+        ></NetworkGraph>
+      </div>
     </Layout>
   );
 }

@@ -10,6 +10,7 @@ import {
   Simulation,
 } from 'd3-force';
 import { Link } from 'gatsby';
+import ZoomableSvg from './zoomable_svg';
 
 /**
  * Each node is rendered as a colored circle with a label on the graph.
@@ -222,14 +223,13 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
 
       const width = Math.max(Math.abs(xmax - xmin), 200);
       const height = Math.max(Math.abs(ymax - ymin), 200);
-
       this.setState({
         nodes: this.state.nodes,
         links: this.state.links,
-        width: width * 1.5,
-        height: height * 1.5,
-        xmin: Math.floor(xmin) - width * 0.25,
-        ymin: Math.floor(ymin) - height * 0.25,
+        width: width * 1.25,
+        height: height * 1.25,
+        xmin: Math.floor(xmin) - width * 0.125,
+        ymin: Math.floor(ymin) - height * 0.125,
       });
     };
 
@@ -262,55 +262,38 @@ export class NetworkGraph extends React.Component<NetworkGraphProps, State> {
   }
 
   render() {
-    const viewBox = `${this.state.xmin} ${this.state.ymin} ${this.state.width} ${this.state.height}`;
-
     return (
-      <div
-        className="svg-container"
-        style={{
-          display: 'inline-block',
-          position: 'relative',
-          width: '100%',
-          paddingBottom: 100.0 * (this.state.height / this.state.width) + '%',
-          verticalAlign: 'middle',
-          overflow: 'hidden',
+      <ZoomableSvg
+        viewBox={{
+          xmin: this.state.xmin,
+          ymin: this.state.ymin,
+          width: this.state.width,
+          height: this.state.height,
         }}
       >
-        <svg
-          version="1.1"
-          viewBox={viewBox}
-          preserveAspectRatio="xMinYMin meet"
-          style={{
-            display: 'inline-block',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-          }}
-        >
-          <style>
-            {`svg g:not(:hover) .longTitle { opacity: 0;}`}
-            {`svg g:hover .longTitle { opacity: 100; }`}
-            {`svg g:not(:hover) .shortTitle { opacity: 100;}`}
-            {`svg g:hover .shortTitle { opacity: 0;}`}
-            {`svg g:hover line { opacity: 1.0; stroke-width: 3.0; }`}
-          </style>
-          <defs>
-            <marker
-              id="arrowhead"
-              markerWidth="10"
-              markerHeight="7"
-              refX="13"
-              refY="3.5"
-              orient="auto"
-              markerUnits="userSpaceOnUse"
-            >
-              <polygon points="0 0, 10 3.5, 0 7" fill="#586e75"></polygon>
-            </marker>
-          </defs>
-          {this.state.links.map(render_graph_link)}
-          {this.state.nodes.map(render_graph_node)}
-        </svg>
-      </div>
+        <style>
+          {`svg g g:not(:hover) .longTitle { opacity: 0;}`}
+          {`svg g g:hover .longTitle { opacity: 100; }`}
+          {`svg g g:not(:hover) .shortTitle { opacity: 100;}`}
+          {`svg g g:hover .shortTitle { opacity: 0;}`}
+          {`svg g:hover > line { opacity: 1.0; stroke-width: 3.0; }`}
+        </style>
+        <defs>
+          <marker
+            id="arrowhead"
+            markerWidth="10"
+            markerHeight="7"
+            refX="13"
+            refY="3.5"
+            orient="auto"
+            markerUnits="userSpaceOnUse"
+          >
+            <polygon points="0 0, 10 3.5, 0 7" fill="#586e75"></polygon>
+          </marker>
+        </defs>
+        {this.state.links.map(render_graph_link)}
+        {this.state.nodes.map(render_graph_node)}
+      </ZoomableSvg>
     );
   }
 }
